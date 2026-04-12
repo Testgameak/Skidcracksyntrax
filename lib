@@ -1251,3 +1251,200 @@ function MoonLightHub:CreateWindow(titleText, versionText)
 end
 
 return MoonLightHub
+
+-- ╔══════════════════════════════════════════════════════════╗
+-- ║              EXAMPLE - KHÔNG DÙNG LOADSTRING            ║
+-- ╚══════════════════════════════════════════════════════════╝
+
+local Window = MoonLightHub:CreateWindow("My Hub", "v1.0.0")
+
+-- ══════════════════════════════════════
+--  TAB: COMBAT
+-- ══════════════════════════════════════
+Window:MakeTabSection("Combat")
+local CombatTab = Window:MakeTab("Combat", "rbxassetid://6031090990")
+
+CombatTab:AddToggle("Auto Farm", "", false, function(state)
+    _G.AutoFarm = state
+    if state then
+        task.spawn(function()
+            while _G.AutoFarm do
+                -- Logic auto farm ở đây
+                print("Farming...")
+                task.wait(1)
+            end
+        end)
+    end
+end)
+
+CombatTab:AddToggle("Silent Aim", "", false, function(state)
+    _G.SilentAim = state
+    print("Silent Aim:", state)
+end)
+
+CombatTab:AddSlider("Walk Speed", "", 16, 500, 16, function(value)
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.WalkSpeed = value
+    end
+end)
+
+CombatTab:AddSlider("Jump Power", "", 50, 500, 50, function(value)
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.JumpPower = value
+    end
+end)
+
+CombatTab:AddDropdown("Aim Part", "", {"Head", "HumanoidRootPart", "UpperTorso"}, function(selected)
+    _G.AimPart = selected
+    print("Aim part:", selected)
+end)
+
+CombatTab:AddButton("Kill Aura", "", function()
+    local lp = game.Players.LocalPlayer
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= lp and player.Character then
+            local hum = player.Character:FindFirstChild("Humanoid")
+            if hum then hum.Health = 0 end
+        end
+    end
+end)
+
+-- ══════════════════════════════════════
+--  TAB: PLAYER
+-- ══════════════════════════════════════
+Window:MakeTabSection("Player")
+local PlayerTab = Window:MakeTab("Player", "rbxassetid://6031068426")
+
+PlayerTab:AddToggle("Infinite Jump", "", false, function(state)
+    _G.InfJump = state
+    if state then
+        local conn
+        conn = game:GetService("UserInputService").JumpRequest:Connect(function()
+            if not _G.InfJump then conn:Disconnect() return end
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+    end
+end)
+
+PlayerTab:AddToggle("No Clip", "", false, function(state)
+    _G.NoClip = state
+    if state then
+        game:GetService("RunService").Stepped:Connect(function()
+            if _G.NoClip then
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    for _, p in pairs(char:GetDescendants()) do
+                        if p:IsA("BasePart") then p.CanCollide = false end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+PlayerTab:AddToggle("Full Bright", "", false, function(state)
+    local Lighting = game:GetService("Lighting")
+    if state then
+        Lighting.Brightness    = 10
+        Lighting.ClockTime     = 14
+        Lighting.FogEnd        = 100000
+        Lighting.GlobalShadows = false
+    else
+        Lighting.Brightness    = 1
+        Lighting.ClockTime     = 14
+        Lighting.FogEnd        = 100000
+        Lighting.GlobalShadows = true
+    end
+end)
+
+PlayerTab:AddButton("Reset Character", "", function()
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char:FindFirstChildOfClass("Humanoid").Health = 0
+    end
+end)
+
+PlayerTab:AddButton("Rejoin", "", function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+end)
+
+-- ══════════════════════════════════════
+--  TAB: VISUALS
+-- ══════════════════════════════════════
+Window:MakeTabSection("Visuals")
+local VisualTab = Window:MakeTab("Visuals", "rbxassetid://6034684950")
+
+VisualTab:AddToggle("ESP Players", "", false, function(state)
+    _G.ESP = state
+    if state then
+        task.spawn(function()
+            while _G.ESP do
+                for _, player in pairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        local root = player.Character:FindFirstChild("HumanoidRootPart")
+                        if root and not root:FindFirstChild("ESPBox") then
+                            local bb = Instance.new("BillboardGui")
+                            bb.Name = "ESPBox"
+                            bb.Size = UDim2.new(0, 60, 0, 80)
+                            bb.AlwaysOnTop = true
+                            bb.Parent = root
+                            local label = Instance.new("TextLabel", bb)
+                            label.Size = UDim2.new(1, 0, 1, 0)
+                            label.BackgroundTransparency = 1
+                            label.Text = player.Name
+                            label.TextColor3 = Color3.fromRGB(255, 50, 50)
+                            label.Font = Enum.Font.GothamBold
+                            label.TextSize = 14
+                        end
+                    end
+                end
+                task.wait(0.5)
+            end
+            -- Xóa ESP khi tắt
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player.Character then
+                    local root = player.Character:FindFirstChild("HumanoidRootPart")
+                    if root and root:FindFirstChild("ESPBox") then
+                        root.ESPBox:Destroy()
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+VisualTab:AddSlider("FOV", "", 10, 120, 70, function(value)
+    workspace.CurrentCamera.FieldOfView = value
+end)
+
+-- ══════════════════════════════════════
+--  TAB: MISC
+-- ══════════════════════════════════════
+Window:MakeTabSection("Misc")
+local MiscTab = Window:MakeTab("Misc", "rbxassetid://6031225819")
+
+MiscTab:AddToggle("Anti AFK", "", true, function(state)
+    if state then
+        local VU = game:GetService("VirtualUser")
+        game.Players.LocalPlayer.Idled:Connect(function()
+            VU:CaptureController()
+            VU:ClickButton2(Vector2.new())
+        end)
+    end
+end)
+
+MiscTab:AddButton("Copy Place ID", "", function()
+    setclipboard(tostring(game.PlaceId))
+    print("Đã copy Place ID:", game.PlaceId)
+end)
+
+MiscTab:AddDropdown("Game Speed", "", {"0.5x", "1x", "2x", "3x"}, function(v)
+    local speeds = {["0.5x"]=0.5, ["1x"]=1, ["2x"]=2, ["3x"]=3}
+    game:GetService("RunService"):Set3dRenderingEnabled(true)
+    workspace.Gravity = 196.2 * (speeds[v] or 1)
+end)
